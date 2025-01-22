@@ -1,0 +1,40 @@
+function [x_opt, f_x_opt, inter] = Simple_A(A, b, c)
+    [m, n] = size(A);
+    if(m>n)
+        error("约束过多，无解");
+    end
+
+    basis_index = randperm(n, m);
+    nobasis_index = setdiff(1:n, basis_index);
+    inter = 0;
+
+    while true
+        x0 = zeros(n, 1);
+        x0(basis_index) = A(:, basis_index) \ b;
+        cb = c(basis_index);
+        sigma = zeros(1, n);
+        sigma(nobasis_index) = c(nobasis_index)' - (cb' * A(:, nobasis_index));
+        [~, s] = min(sigma);
+
+        if sigma(s) >= 0
+            x_opt = x0;
+            f_x_opt = c' * x_opt;
+            break;
+        end
+
+        theta = b / A(:, s);
+        theta(theta <= 0 | isinf(theta)) = inf;
+        
+        [~, q] = min(theta);
+        q = basis_index(q);
+        basis_index(q) = s;
+        nobasis_index = setdiff(1:n, basis_index);
+
+        A(:, basis_index) = eye(m , m);
+        A(:, nobasis_index) = A(:, basis_index) \ A(:, nobasis_index);
+        
+        b = A(:, basis_index) / b;
+        inter = inter + 1;
+    end
+end
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
